@@ -78,6 +78,7 @@ ORDER BY last_activity_at DESC
     value="count(*) as open_leads"
     where="lead_status = 'Open'"
     title="Open Leads"
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% big_value
@@ -86,6 +87,7 @@ ORDER BY last_activity_at DESC
     where="lead_status = 'Open'"
     fmt="#,##0.0' L'"
     title="Open Pipeline Value"
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% big_value
@@ -94,6 +96,7 @@ ORDER BY last_activity_at DESC
     where="lead_status = 'Won'"
     fmt="#,##0.0' L'"
     title="Won Value"
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% big_value
@@ -102,6 +105,7 @@ ORDER BY last_activity_at DESC
     where="lead_status = 'Lost'"
     fmt="#,##0.0' L'"
     title="Lost Value"
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% big_value
@@ -109,6 +113,7 @@ ORDER BY last_activity_at DESC
     value="avg(win_rate)"
     fmt="pct1"
     title="Win Rate"
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% /row %}
@@ -117,7 +122,7 @@ ORDER BY last_activity_at DESC
 
 ## Lead Details
 
-{% table data="filtered_leads" page_size=20 search=false subtotals=false %}
+{% table data="filtered_leads" page_size=20 search=false subtotals=false filters=["brand_filter", "member_filter"] %}
     {% dimension value="status_indicator" title="Status" /%}
     {% dimension value="brand" /%}
     {% dimension value="lead_name" /%}
