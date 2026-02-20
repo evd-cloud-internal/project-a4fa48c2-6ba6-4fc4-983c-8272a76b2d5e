@@ -108,14 +108,6 @@ ORDER BY last_activity_at DESC
     filters=["brand_filter", "member_filter"]
 /%}
 
-{% big_value
-    data="filtered_leads"
-    value="avg(win_rate)"
-    fmt="pct1"
-    title="Win Rate"
-    filters=["brand_filter", "member_filter"]
-/%}
-
 {% /row %}
 
 
