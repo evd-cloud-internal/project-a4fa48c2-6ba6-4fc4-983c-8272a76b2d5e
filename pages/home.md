@@ -151,14 +151,7 @@ WHERE {{brand_filter.filter}}
 
 ## Lead Details
 
-{% text_input
-    id="lead_search"
-    title="Search Leads"
-    placeholder="Search by lead name, contact, company, or city..."
-    icon="search"
-/%}
-
-{% table data="filtered_leads" page_size=20 search=false subtotals=false where="lead_name ilike '%{{lead_search}}%' or contact_name ilike '%{{lead_search}}%' or company_name ilike '%{{lead_search}}%' or city ilike '%{{lead_search}}%' or scope_of_work ilike '%{{lead_search}}%'" %}
+{% table data="filtered_leads" page_size=20 search=false subtotals=false %}
     {% dimension value="status_indicator" title="Status" /%}
     {% dimension value="brand" /%}
     {% dimension value="lead_name" /%}
@@ -178,3 +171,4 @@ WHERE {{brand_filter.filter}}
     {% dimension value="total_activities" /%}
     {% dimension value="lead_status" /%}
 {% /table %}
+
