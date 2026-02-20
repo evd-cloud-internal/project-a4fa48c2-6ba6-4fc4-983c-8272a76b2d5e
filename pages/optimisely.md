@@ -178,7 +178,7 @@ WHERE lead_status = 'Won'
 ORDER BY closing_date_raw DESC
 ```
 
-{% table data="won_leads" search=true %}
+{% table data="won_leads" %}
     {% dimension value="lead_name" title="Lead Name" /%}
     {% dimension value="brand" /%}
     {% dimension value="owner_name" title="Owner" /%}
@@ -211,7 +211,7 @@ WHERE lead_status = 'Open'
 ORDER BY closing_date_raw ASC
 ```
 
-{% table data="closing_soon" search=true %}
+{% table data="closing_soon" %}
     {% dimension value="lead_name" title="Lead Name" /%}
     {% dimension value="brand" /%}
     {% dimension value="owner_name" title="Owner" /%}
@@ -245,7 +245,7 @@ ORDER BY amount_lakhs DESC
 LIMIT 15
 ```
 
-{% table data="high_value_leads" search=true %}
+{% table data="high_value_leads" %}
     {% dimension value="lead_name" title="Lead Name" /%}
     {% dimension value="brand" /%}
     {% dimension value="owner_name" title="Owner" /%}
@@ -278,7 +278,7 @@ WHERE lead_status = 'Open'
 ORDER BY age_in_days DESC
 ```
 
-{% table data="stale_leads" search=true %}
+{% table data="stale_leads" %}
     {% dimension value="lead_name" title="Lead Name" /%}
     {% dimension value="brand" /%}
     {% dimension value="owner_name" title="Owner" /%}
@@ -312,7 +312,7 @@ WHERE lead_status = 'Open'
 ORDER BY closing_date_raw ASC
 ```
 
-{% table data="overdue_leads" search=true %}
+{% table data="overdue_leads" %}
     {% dimension value="lead_name" title="Lead Name" /%}
     {% dimension value="brand" /%}
     {% dimension value="owner_name" title="Owner" /%}
