@@ -6,7 +6,7 @@ type: page
 
 # 🌐 Network Team — Optimisely
 
-```sql network_leads
+```sql filtered_leads
 SELECT
     brand,
     lead_name,
@@ -33,7 +33,18 @@ SELECT
     call_count,
     event_count,
     task_count,
-    total_activities
+    total_activities,
+    CASE
+        WHEN network_relationship IN ('owned', 'owned_and_sourced') THEN
+            CASE WHEN owner_name = 'Sumita' THEN 'Sumita Bajaj' ELSE owner_name END
+        WHEN network_relationship = 'sourced' THEN
+            CASE WHEN lead_sourced_by = 'Sumita' THEN 'Sumita Bajaj' ELSE lead_sourced_by END
+    END AS network_member,
+    CASE
+        WHEN deal_outcome = 'Won' THEN concat(char(60), 'span style="color: #4ade80; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
+        WHEN deal_outcome = 'Lost' THEN concat(char(60), 'span style="color: #f87171; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
+        ELSE concat(char(60), 'span style="color: #fbbf24; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
+    END AS lead_name_styled
 FROM alloydb_marts_fct_network_pipeline
 ORDER BY last_activity_at DESC
 ```
@@ -42,40 +53,19 @@ ORDER BY last_activity_at DESC
 
 {% dropdown
     id="brand_filter"
-    data="network_leads"
+    data="filtered_leads"
     value_column="brand"
     title="Brand"
     multiple=true
 /%}
 
 {% dropdown
-    id="owner_filter"
-    data="network_leads"
-    value_column="owner_name"
-    title="Sales Owner"
+    id="member_filter"
+    data="filtered_leads"
+    value_column="network_member"
+    title="Network Member"
     multiple=true
 /%}
-
-{% dropdown
-    id="company_filter"
-    data="network_leads"
-    value_column="company_name"
-    title="Company"
-    multiple=true
-/%}
-
-```sql filtered_leads
-SELECT *,
-    CASE
-        WHEN lead_status = 'Won' THEN concat(char(60), 'span style="color: #4ade80; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
-        WHEN lead_status = 'Lost' THEN concat(char(60), 'span style="color: #f87171; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
-        ELSE concat(char(60), 'span style="color: #fbbf24; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
-    END AS lead_name_styled
-FROM {{network_leads}}
-WHERE {{brand_filter.filter}}
-  AND {{owner_filter.filter}}
-  AND {{company_filter.filter}}
-```
 
 ## 📊 Pipeline by Stage
 
@@ -86,11 +76,7 @@ WHERE {{brand_filter.filter}}
     value="count(*)"
     title="Open Lead Count"
     where="lead_status = 'Open'"
-    sparkline={
-        type="bar"
-        x="created_date_raw"
-        date_grain="month"
-    }
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% big_value
@@ -99,11 +85,7 @@ WHERE {{brand_filter.filter}}
     title="Open Pipeline Value"
     fmt="#,##0.00' Cr'"
     where="lead_status = 'Open'"
-    sparkline={
-        type="area"
-        x="created_date_raw"
-        date_grain="month"
-    }
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% big_value
@@ -111,11 +93,7 @@ WHERE {{brand_filter.filter}}
     value="count(*)"
     title="Won Lead Count"
     where="lead_status = 'Won'"
-    sparkline={
-        type="bar"
-        x="created_date_raw"
-        date_grain="month"
-    }
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% big_value
@@ -124,11 +102,7 @@ WHERE {{brand_filter.filter}}
     title="Won Pipeline Value"
     fmt="#,##0.00' Cr'"
     where="lead_status = 'Won'"
-    sparkline={
-        type="area"
-        x="created_date_raw"
-        date_grain="month"
-    }
+    filters=["brand_filter", "member_filter"]
 /%}
 
 {% /row %}
@@ -149,6 +123,8 @@ SELECT
     amount_lakhs
 FROM {{filtered_leads}}
 WHERE lead_status = 'Open'
+  AND {{brand_filter.filter}}
+  AND {{member_filter.filter}}
 ```
 
 {% table
@@ -160,166 +136,12 @@ WHERE lead_status = 'Open'
     {% measure value="sum(amount_lakhs)" fmt="#,##0.0' L'" /%}
 {% /table %}
 
-## 🏆 Recently Won Leads
-
-```sql won_leads
-SELECT
-    lead_name,
-    brand,
-    owner_name,
-    company_name,
-    contact_name,
-    amount_lakhs,
-    closing_date_display,
-    lead_source,
-    created_date
-FROM {{filtered_leads}}
-WHERE lead_status = 'Won'
-ORDER BY closing_date_raw DESC
-```
-
-{% table data="won_leads" %}
-    {% dimension value="lead_name" title="Lead Name" /%}
+{% table
+    data="pipeline_by_stage"
+    title="Pipeline Count by Brand & Stage"
+%}
     {% dimension value="brand" /%}
-    {% dimension value="owner_name" title="Owner" /%}
-    {% dimension value="closing_date_display" title="Closing Date" /%}
-    {% dimension value="company_name" title="Company" /%}
-    {% dimension value="contact_name" title="Contact" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
-    {% dimension value="lead_source" title="Lead Source" /%}
-    {% dimension value="created_date" title="Created" /%}
+    {% pivot value="stage_ordered" sort="asc" /%}
+    {% measure value="count(*)" /%}
 {% /table %}
 
-## ⏰ Leads Closing Soon (Next 15 Days)
-
-```sql closing_soon
-SELECT
-    lead_name,
-    brand,
-    owner_name,
-    stage,
-    company_name,
-    contact_name,
-    amount_lakhs,
-    closing_date_display,
-    age_in_days
-FROM {{filtered_leads}}
-WHERE lead_status = 'Open'
-  AND closing_date_raw != toDate('1970-01-01')
-  AND closing_date_raw >= today()
-  AND closing_date_raw <= today() + INTERVAL 15 DAY
-ORDER BY closing_date_raw ASC
-```
-
-{% table data="closing_soon" %}
-    {% dimension value="lead_name" title="Lead Name" /%}
-    {% dimension value="brand" /%}
-    {% dimension value="owner_name" title="Owner" /%}
-    {% dimension value="closing_date_display" title="Closing Date" /%}
-    {% dimension value="stage" /%}
-    {% dimension value="company_name" title="Company" /%}
-    {% dimension value="contact_name" title="Contact" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
-    {% dimension value="age_in_days" title="Age (Days)" /%}
-{% /table %}
-
-## 🔥 High-Value Open Leads
-
-```sql high_value_leads
-SELECT
-    lead_name,
-    brand,
-    owner_name,
-    stage,
-    company_name,
-    contact_name,
-    amount_lakhs,
-    last_activity_date,
-    closing_date_display,
-    age_in_days,
-    lead_source
-FROM {{filtered_leads}}
-WHERE lead_status = 'Open'
-  AND amount_lakhs > 0
-ORDER BY amount_lakhs DESC
-LIMIT 15
-```
-
-{% table data="high_value_leads" %}
-    {% dimension value="lead_name" title="Lead Name" /%}
-    {% dimension value="brand" /%}
-    {% dimension value="owner_name" title="Owner" /%}
-    {% dimension value="stage" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
-    {% dimension value="company_name" title="Company" /%}
-    {% dimension value="closing_date_display" title="Closing Date" /%}
-    {% dimension value="last_activity_date" title="Last Activity" /%}
-    {% dimension value="age_in_days" title="Age (Days)" /%}
-{% /table %}
-
-## 😴 Stale Leads — No Activity in 30+ Days
-
-```sql stale_leads
-SELECT
-    lead_name,
-    brand,
-    owner_name,
-    created_date,
-    last_activity_date,
-    stage,
-    company_name,
-    contact_name,
-    amount_lakhs,
-    closing_date_display,
-    age_in_days
-FROM {{filtered_leads}}
-WHERE lead_status = 'Open'
-  AND age_in_days > 30
-ORDER BY age_in_days DESC
-```
-
-{% table data="stale_leads" %}
-    {% dimension value="lead_name" title="Lead Name" /%}
-    {% dimension value="brand" /%}
-    {% dimension value="owner_name" title="Owner" /%}
-    {% dimension value="created_date" title="Created" /%}
-    {% dimension value="last_activity_date" title="Last Activity" /%}
-    {% dimension value="stage" /%}
-    {% dimension value="company_name" title="Company" /%}
-    {% dimension value="contact_name" title="Contact" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
-    {% dimension value="closing_date_display" title="Closing Date" /%}
-    {% dimension value="age_in_days" title="Age (Days)" /%}
-{% /table %}
-
-## 🚨 Overdue Leads — Closing Date Crossed
-
-```sql overdue_leads
-SELECT
-    lead_name,
-    brand,
-    owner_name,
-    closing_date_display,
-    stage,
-    company_name,
-    contact_name,
-    amount_lakhs,
-    age_in_days
-FROM {{filtered_leads}}
-WHERE lead_status = 'Open'
-  AND closing_date_raw != toDate('1970-01-01')
-  AND closing_date_raw < today()
-ORDER BY closing_date_raw ASC
-```
-
-{% table data="overdue_leads" %}
-    {% dimension value="lead_name" title="Lead Name" /%}
-    {% dimension value="brand" /%}
-    {% dimension value="owner_name" title="Owner" /%}
-    {% dimension value="closing_date_display" title="Closing Date" /%}
-    {% dimension value="stage" /%}
-    {% dimension value="company_name" title="Company" /%}
-    {% dimension value="contact_name" title="Contact" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
-    {% dimension value="age_in_days" title="Age (Days)" /%}
-{% /table %}
