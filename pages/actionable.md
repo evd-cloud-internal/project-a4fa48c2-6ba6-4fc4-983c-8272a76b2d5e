@@ -13,38 +13,23 @@ SELECT
     owner_name,
     stage,
     deal_outcome AS lead_status,
-    network_relationship,
     contact_name,
     company_name,
-    city,
-    project_category,
-    scope_of_work,
     amount_lakhs,
     age_in_days,
     lead_source,
-    lead_sourced_by,
     formatDateTime(toDate(last_activity_at), '%d %b %Y') AS last_activity_date,
     formatDateTime(toDate(created_at), '%d %b %Y') AS created_date,
-    toDate(created_at) AS created_date_raw,
     IF(closing_date IS NULL OR closing_date = toDate('1970-01-01'), 'Not Set',
         formatDateTime(closing_date, '%d %b %Y')
     ) AS closing_date_display,
     coalesce(closing_date, toDate('1970-01-01')) AS closing_date_raw,
-    call_count,
-    event_count,
-    task_count,
-    total_activities,
     CASE
         WHEN network_relationship IN ('owned', 'owned_and_sourced') THEN
             CASE WHEN owner_name = 'Sumita' THEN 'Sumita Bajaj' ELSE owner_name END
         WHEN network_relationship = 'sourced' THEN
             CASE WHEN lead_sourced_by = 'Sumita' THEN 'Sumita Bajaj' ELSE lead_sourced_by END
-    END AS network_member,
-    CASE
-        WHEN deal_outcome = 'Won' THEN concat(char(60), 'span style="color: #4ade80; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
-        WHEN deal_outcome = 'Lost' THEN concat(char(60), 'span style="color: #f87171; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
-        ELSE concat(char(60), 'span style="color: #fbbf24; font-weight: 600;"', char(62), lead_name, char(60), '/span', char(62))
-    END AS lead_name_styled
+    END AS network_member
 FROM alloydb_marts_fct_network_pipeline
 ORDER BY last_activity_at DESC
 ```
@@ -94,7 +79,7 @@ ORDER BY closing_date_raw DESC
     {% dimension value="closing_date_display" title="Closing Date" /%}
     {% dimension value="company_name" title="Company" /%}
     {% dimension value="contact_name" title="Contact" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
+    {% dimension value="amount_lakhs" title="Amount (₹L)" fmt="num1" /%}
     {% dimension value="lead_source" title="Lead Source" /%}
     {% dimension value="created_date" title="Created" /%}
 {% /table %}
@@ -130,7 +115,7 @@ ORDER BY closing_date_raw ASC
     {% dimension value="stage" /%}
     {% dimension value="company_name" title="Company" /%}
     {% dimension value="contact_name" title="Contact" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
+    {% dimension value="amount_lakhs" title="Amount (₹L)" fmt="num1" /%}
     {% dimension value="age_in_days" title="Age (Days)" /%}
 {% /table %}
 
@@ -163,7 +148,7 @@ LIMIT 15
     {% dimension value="brand" /%}
     {% dimension value="owner_name" title="Owner" /%}
     {% dimension value="stage" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
+    {% dimension value="amount_lakhs" title="Amount (₹L)" fmt="num1" /%}
     {% dimension value="company_name" title="Company" /%}
     {% dimension value="closing_date_display" title="Closing Date" /%}
     {% dimension value="last_activity_date" title="Last Activity" /%}
@@ -202,7 +187,7 @@ ORDER BY age_in_days DESC
     {% dimension value="stage" /%}
     {% dimension value="company_name" title="Company" /%}
     {% dimension value="contact_name" title="Contact" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
+    {% dimension value="amount_lakhs" title="Amount (₹L)" fmt="num1" /%}
     {% dimension value="closing_date_display" title="Closing Date" /%}
     {% dimension value="age_in_days" title="Age (Days)" /%}
 {% /table %}
@@ -237,6 +222,6 @@ ORDER BY closing_date_raw ASC
     {% dimension value="stage" /%}
     {% dimension value="company_name" title="Company" /%}
     {% dimension value="contact_name" title="Contact" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹ L)" fmt="#,##0.0' L'" /%}
+    {% dimension value="amount_lakhs" title="Amount (₹L)" fmt="num1" /%}
     {% dimension value="age_in_days" title="Age (Days)" /%}
 {% /table %}
