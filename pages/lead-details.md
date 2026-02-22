@@ -15,7 +15,6 @@ SELECT
     owner_name,
     stage,
     deal_outcome AS lead_status,
-    network_relationship,
     contact_name,
     company_name,
     city,
@@ -24,16 +23,11 @@ SELECT
     amount_lakhs,
     age_in_days,
     lead_source,
-    lead_sourced_by,
     formatDateTime(toDate(last_activity_at), '%d %b %Y') AS last_activity_date,
     formatDateTime(toDate(created_at), '%d %b %Y') AS created_date,
-    toDate(created_at) AS created_date_raw,
     IF(closing_date IS NULL OR closing_date = toDate('1970-01-01'), 'Not Set',
         formatDateTime(closing_date, '%d %b %Y')
     ) AS closing_date,
-    call_count,
-    event_count,
-    task_count,
     total_activities,
     CASE
         WHEN network_relationship IN ('owned', 'owned_and_sourced') THEN
@@ -45,8 +39,7 @@ SELECT
         WHEN deal_outcome = 'Won' THEN '🟢'
         WHEN deal_outcome = 'Lost' THEN '🔴'
         ELSE '🟡'
-    END AS status_indicator,
-    countIf(deal_outcome = 'Won') OVER () * 1.0 / count(*) OVER () AS win_rate
+    END AS status_indicator
 FROM alloydb_marts_fct_network_pipeline
 ORDER BY last_activity_at DESC
 ```
@@ -85,8 +78,8 @@ ORDER BY last_activity_at DESC
     data="filtered_leads"
     value="sum(amount_lakhs) as open_pipeline"
     where="lead_status = 'Open'"
-    fmt="#,##0.0' L'"
-    title="Open Pipeline Value"
+    fmt="num1"
+    title="Open Pipeline (₹L)"
     filters=["brand_filter", "member_filter"]
 /%}
 
@@ -94,8 +87,8 @@ ORDER BY last_activity_at DESC
     data="filtered_leads"
     value="sum(amount_lakhs) as won_value"
     where="lead_status = 'Won'"
-    fmt="#,##0.0' L'"
-    title="Won Value"
+    fmt="num1"
+    title="Won Value (₹L)"
     filters=["brand_filter", "member_filter"]
 /%}
 
@@ -103,8 +96,8 @@ ORDER BY last_activity_at DESC
     data="filtered_leads"
     value="sum(amount_lakhs) as lost_value"
     where="lead_status = 'Lost'"
-    fmt="#,##0.0' L'"
-    title="Lost Value"
+    fmt="num1"
+    title="Lost Value (₹L)"
     filters=["brand_filter", "member_filter"]
 /%}
 
@@ -117,6 +110,7 @@ ORDER BY last_activity_at DESC
 {% table data="filtered_leads" page_size=20 search=false subtotals=false filters=["brand_filter", "member_filter"] %}
     {% dimension value="status_indicator" title="Status" /%}
     {% dimension value="brand" /%}
+    {% dimension value="network_member" title="Network Member" /%}
     {% dimension value="lead_name" /%}
     {% dimension value="owner_name" /%}
     {% dimension value="stage" /%}
@@ -125,7 +119,7 @@ ORDER BY last_activity_at DESC
     {% dimension value="city" /%}
     {% dimension value="project_category" /%}
     {% dimension value="scope_of_work" /%}
-    {% dimension value="amount_lakhs" title="Amount (₹L)" /%}
+    {% dimension value="amount_lakhs" title="Amount (₹L)" fmt="num1" /%}
     {% dimension value="age_in_days" /%}
     {% dimension value="lead_source" /%}
     {% dimension value="last_activity_date" /%}
